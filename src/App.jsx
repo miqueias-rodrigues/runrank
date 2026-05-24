@@ -2,12 +2,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import logoRunRank from './assets/logo-runrank.png'
 
-/* ─── Fonte Barlow Condensed ─── */
-const fontLink = document.createElement('link')
-fontLink.rel = 'stylesheet'
-fontLink.href = 'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap'
-document.head.appendChild(fontLink)
-
 /* ─── Constantes de cor ─── */
 const C = {
   navy:   '#0D0F1A',
@@ -32,6 +26,13 @@ const AVATAR_COLORS = [
   '#00695C','#E65100','#1A237E','#880E4F',
 ]
 
+function normalizeBaseUrl(baseUrl) {
+  if (!baseUrl) return '/'
+  return baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
+}
+
+const BASE_URL = normalizeBaseUrl(import.meta.env.BASE_URL)
+
 function avatarBg(index) { return AVATAR_COLORS[index % AVATAR_COLORS.length] }
 
 function iniciais(nome) {
@@ -43,7 +44,7 @@ function Avatar({ src, nome, size = 44, index = 0, borderColor = null }) {
   const [erro, setErro] = useState(false)
   const bg  = avatarBg(index)
   const bdr = borderColor || bg
-  const ok  = src && !erro && !src.includes('avatar/athlete')
+  const ok  = typeof src === 'string' && src && !erro && !src.includes('avatar/athlete')
 
   const base = {
     width: size, height: size, borderRadius: '50%', flexShrink: 0,
@@ -63,7 +64,7 @@ function Avatar({ src, nome, size = 44, index = 0, borderColor = null }) {
 
 function inicioDeMes() {
   const d = new Date()
-  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString()
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)).toISOString()
 }
 
 function mesAtualLabel() {
@@ -83,7 +84,7 @@ export default function App() {
 
   const STRAVA_CLIENT_ID = import.meta.env.VITE_STRAVA_CLIENT_ID
   const FUNCTION_URL     = 'https://vgathsrrzurpzmiapdte.supabase.co/functions/v1/hyper-service'
-  const redirectUri      = `${window.location.origin}/callback`
+  const redirectUri      = new URL(`${BASE_URL}callback`, window.location.origin).toString()
 
   const stravaAuthUrl =
     `https://www.strava.com/oauth/authorize` +
@@ -135,7 +136,7 @@ export default function App() {
     } catch (err) {
       console.error('Erro callback:', err)
     } finally {
-      window.history.replaceState({}, document.title, '/')
+      window.history.replaceState({}, document.title, BASE_URL)
       setLoading(false)
     }
   }
@@ -171,7 +172,7 @@ export default function App() {
     setCorridas([])
   }
 
-  /* ── gráfico semanal (últimos 7 dias) ── */
+  /* ── gráfico semanal (últimos 7 dias) — CORRIGIDO ── */
   const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
   const hoje = new Date()
   const semana = Array.from({ length: 7 }, (_, i) => {
@@ -179,12 +180,12 @@ export default function App() {
     d.setDate(hoje.getDate() - 6 + i)
     return d
   })
-  const kmPorDia = semana.map(d => {
-    const iso = d.toISOString().slice(0, 10)
+  const kmPorDia = semana.map((d, i) => {          // ← i é o índice real agora
+    const iso   = d.toISOString().slice(0, 10)
     const total = corridas
       .filter(c => c.start_date?.slice(0, 10) === iso)
       .reduce((s, c) => s + (c.distance_meters || 0) / 1000, 0)
-    return { dia: dias[d.getDay()], km: total, isHoje: i => i === 6 }
+    return { dia: dias[d.getDay()], km: total, isHoje: i === 6 }  // ← i === 6 correto
   })
   const maxKmDia = Math.max(...kmPorDia.map(d => d.km), 1)
 
@@ -208,7 +209,6 @@ export default function App() {
     },
     inner: { maxWidth: 430, margin: '0 auto', padding: '0 0 20px' },
 
-    /* header ranking */
     rankHeader: {
       padding: '52px 20px 16px',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -223,7 +223,6 @@ export default function App() {
       fontWeight: 900, fontSize: 32, letterSpacing: -0.5, lineHeight: 1,
     },
 
-    /* tabs categoria */
     tabsRow: {
       display: 'flex', gap: 8, padding: '14px 20px',
       overflowX: 'auto', scrollbarWidth: 'none',
@@ -239,7 +238,6 @@ export default function App() {
       boxShadow: active ? '0 4px 16px rgba(232,53,74,0.3)' : 'none',
     }),
 
-    /* pódio */
     podiumSection: {
       padding: '12px 20px 16px',
       display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 8,
@@ -275,7 +273,6 @@ export default function App() {
       color: tipo === 'first' ? C.gold : tipo === 'second' ? C.silver : C.bronze,
     }),
 
-    /* lista */
     rankList: { padding: '0 16px 24px', display: 'flex', flexDirection: 'column', gap: 6 },
     rankItem: (souEu) => ({
       display: 'flex', alignItems: 'center', gap: 12,
@@ -284,13 +281,15 @@ export default function App() {
       border: `1px solid ${souEu ? 'rgba(232,53,74,0.2)' : C.border}`,
     }),
 
-    /* tab bar */
+    /* ── BUG 3 CORRIGIDO: tab bar centralizada corretamente ── */
     tabBar: {
-      position: 'fixed', bottom: 0, left: 0, right: 0,
+      position: 'fixed', bottom: 0,
+      left: '50%', transform: 'translateX(-50%)',
+      width: '100%', maxWidth: 430,
       background: C.navy, borderTop: `1px solid ${C.border}`,
       display: 'flex', padding: '10px 0 24px', zIndex: 20,
     },
-    tabItem: (active) => ({
+    tabItem: () => ({
       flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
       gap: 3, cursor: 'pointer', background: 'none', border: 'none',
     }),
@@ -302,22 +301,16 @@ export default function App() {
   }
 
   const tabItems = [
-    { id: 'ranking', icon: '🏆', label: 'Ranking' },
+    { id: 'ranking',  icon: '🏆', label: 'Ranking'  },
     { id: 'corridas', icon: '🏃', label: 'Corridas' },
-    { id: 'perfil', icon: '👤', label: 'Perfil' },
+    { id: 'perfil',   icon: '👤', label: 'Perfil'   },
   ]
 
   const tabsKm = [
-    { id: 'total_km',        label: 'Total KM' },
-    { id: 'total_corridas',  label: 'Corridas' },
-    { id: 'maior_corrida_km',label: 'Maior Dist.' },
+    { id: 'total_km',         label: 'Total KM'    },
+    { id: 'total_corridas',   label: 'Corridas'    },
+    { id: 'maior_corrida_km', label: 'Maior Dist.' },
   ]
-
-  function valorTab(atleta) {
-    const v = Number(atleta[tabKm] || 0)
-    if (tabKm === 'total_corridas') return `${v} corridas`
-    return `${v.toFixed(1)} km`
-  }
 
   const tiposPodio = ['second', 'first', 'third']
 
@@ -346,31 +339,16 @@ export default function App() {
               position: 'absolute', bottom: 0, left: 0, right: 0, height: 260, opacity: 0.07,
               background: 'repeating-linear-gradient(0deg,transparent,transparent 38px,rgba(255,255,255,0.4) 38px,rgba(255,255,255,0.4) 40px)',
             }} />
-            {/* runner */}
-            <div style={{ position: 'absolute', top: '18%', left: '50%', transform: 'translateX(-50%)', opacity: 0.9 }}>
-              <svg viewBox="0 0 90 90" width="90" height="90">
-                <circle cx="52" cy="18" r="10" fill={C.red} />
-                <line x1="52" y1="28" x2="46" y2="52" stroke={C.red} strokeWidth="6" strokeLinecap="round" />
-                <line x1="50" y1="36" x2="30" y2="28" stroke={C.red} strokeWidth="5" strokeLinecap="round" />
-                <line x1="50" y1="36" x2="66" y2="46" stroke={C.red} strokeWidth="5" strokeLinecap="round" />
-                <line x1="46" y1="52" x2="26" y2="66" stroke={C.red} strokeWidth="6" strokeLinecap="round" />
-                <line x1="26" y1="66" x2="18" y2="82" stroke={C.red} strokeWidth="5" strokeLinecap="round" />
-                <line x1="46" y1="52" x2="58" y2="68" stroke={C.red} strokeWidth="6" strokeLinecap="round" />
-                <line x1="58" y1="68" x2="74" y2="72" stroke={C.red} strokeWidth="5" strokeLinecap="round" />
-                <line x1="14" y1="82" x2="2"  y2="82" stroke={C.red} strokeWidth="3" strokeLinecap="round" opacity="0.4" />
-              </svg>
-            </div>
 
+            {/* conteúdo login — SEM boneco, só logo */}
             <div style={{ position: 'relative', zIndex: 2, width: '100%', padding: '0 32px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-             <img
+              <img
                 src={logoRunRank}
                 alt="RunRank"
                 style={{
-                  width: 92,
-                  height: 92,
-                  objectFit: 'contain',
-                  marginBottom: 14,
-                  filter: 'drop-shadow(0 8px 28px rgba(232,53,74,0.35))'
+                  width: 110, height: 110, objectFit: 'contain',
+                  marginBottom: 16,
+                  filter: 'drop-shadow(0 8px 28px rgba(232,53,74,0.40))',
                 }}
               />
               <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 52, letterSpacing: -1, color: '#fff', lineHeight: 1, marginBottom: 6 }}>
@@ -379,6 +357,44 @@ export default function App() {
               <div style={{ fontSize: 14, color: C.muted, marginBottom: 32, textAlign: 'center' }}>
                 Iguatu corre. Quem lidera?
               </div>
+
+              {/* ── BUG 2 CORRIGIDO: ranking visível sem login ── */}
+              {ranking.length > 0 && (
+                <div style={{
+                  width: '100%', marginBottom: 28,
+                  background: C.card, border: `1px solid ${C.border}`,
+                  borderRadius: 16, padding: '12px 14px',
+                }}>
+                  <div style={{
+                    fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700,
+                    fontSize: 11, letterSpacing: 2, textTransform: 'uppercase',
+                    color: C.red, marginBottom: 10,
+                  }}>🏆 Top corredores este mês</div>
+                  {ranking.slice(0, 3).map((atleta, i) => {
+                    const medalha = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'
+                    return (
+                      <div key={atleta.id} style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '6px 0',
+                        borderBottom: i < 2 ? `1px solid ${C.border}` : 'none',
+                      }}>
+                        <span style={{ fontSize: 16, width: 24 }}>{medalha}</span>
+                        <Avatar src={atleta.profile_picture} nome={atleta.name} size={30} index={i} />
+                        <span style={{
+                          fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700,
+                          fontSize: 15, flex: 1, color: C.text,
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>{atleta.name.split(' ')[0]}</span>
+                        <span style={{
+                          fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900,
+                          fontSize: 16, color: C.red2,
+                        }}>{Number(atleta.total_km).toFixed(1)} km</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
               <a href={stravaAuthUrl} style={{
                 width: '100%', height: 56, background: C.red, borderRadius: 16,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
@@ -391,28 +407,23 @@ export default function App() {
                 {loading ? 'Sincronizando...' : 'Entrar com Strava'}
               </a>
               <p style={{ marginTop: 16, fontSize: 11, color: C.muted, textAlign: 'center', lineHeight: 1.6 }}>
-                Seus dados de corrida são importados<br />diretamente do Strava. Nenhum GPS é ativado.
+                Seus dados são importados do Strava. Nenhum GPS é ativado.
               </p>
             </div>
           </div>
         )}
 
-        {/* ── ABA RANKING (só logado) ── */}
+        {/* ── ABA RANKING (logado) ── */}
         {usuario && aba === 'ranking' && (
           <>
-            {/* header */}
             <div style={S.rankHeader}>
               <div>
                 <span style={S.monthLabel}>{mesAtualLabel()}</span>
                 <span style={S.pageTitle}>Ranking</span>
               </div>
-              {usuario
-                ? <Avatar src={usuario.profile_picture} nome={usuario.name} size={36} index={0} borderColor={C.red} />
-                : <div style={{ width: 36, height: 36 }} />
-              }
+              <Avatar src={usuario.profile_picture} nome={usuario.name} size={36} index={0} borderColor={C.red} />
             </div>
 
-            {/* tabs categoria */}
             <div style={S.tabsRow}>
               {tabsKm.map(t => (
                 <button key={t.id} style={S.tab(tabKm === t.id)} onClick={() => setTabKm(t.id)}>
@@ -430,25 +441,22 @@ export default function App() {
             {/* pódio top 3 */}
             {top3.length > 0 && (
               <div style={S.podiumSection}>
-                {tiposPodio.map((tipo, ti) => {
-                  const idx   = tipo === 'first' ? 0 : tipo === 'second' ? 1 : 2
+                {tiposPodio.map((tipo) => {
+                  const idx    = tipo === 'first' ? 0 : tipo === 'second' ? 1 : 2
                   const atleta = top3[idx]
                   if (!atleta) return null
-                  const avSize = tipo === 'first' ? 64 : 52
+                  const avSize  = tipo === 'first' ? 64 : 52
                   const borderC = tipo === 'first' ? C.gold : tipo === 'second' ? C.silver : C.bronze
                   return (
                     <div key={atleta.id} style={S.podiumCard(tipo)}>
                       <div style={{ position: 'relative' }}>
                         {tipo === 'first' && (
-                          <span style={{
-                            position: 'absolute', top: -16, left: '50%', transform: 'translateX(-50%)', fontSize: 18,
-                          }}>👑</span>
+                          <span style={{ position: 'absolute', top: -16, left: '50%', transform: 'translateX(-50%)', fontSize: 18 }}>👑</span>
                         )}
-                        <Avatar src={atleta.profile_picture} nome={atleta.name}
-                                size={avSize} index={idx} borderColor={borderC} />
+                        <Avatar src={atleta.profile_picture} nome={atleta.name} size={avSize} index={idx} borderColor={borderC} />
                       </div>
                       <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 13, textAlign: 'center', maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {atleta.name.split(' ')[0]}
+                        {String(atleta.name || '').trim().split(/\s+/)[0] || 'Atleta'}
                       </div>
                       <div style={S.podiumKm(tipo)}>
                         {Number(atleta[tabKm] || 0).toFixed(tabKm === 'total_corridas' ? 0 : 1)}
@@ -472,7 +480,6 @@ export default function App() {
               {resto.map((atleta, i) => {
                 const pos   = i + 4
                 const souEu = atleta.id === usuario?.id
-                const idx   = pos - 1
                 return (
                   <div key={atleta.id} style={S.rankItem(souEu)}>
                     {souEu && (
@@ -486,8 +493,7 @@ export default function App() {
                       fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800,
                       fontSize: 20, color: souEu ? C.red : C.muted, width: 24, textAlign: 'center', flexShrink: 0,
                     }}>{pos}</span>
-                    <Avatar src={atleta.profile_picture} nome={atleta.name}
-                            size={40} index={idx} borderColor={souEu ? C.red : undefined} />
+                    <Avatar src={atleta.profile_picture} nome={atleta.name} size={40} index={pos - 1} borderColor={souEu ? C.red : undefined} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{
                         fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 16,
@@ -511,23 +517,6 @@ export default function App() {
                 )
               })}
             </div>
-
-            {/* CTA login se não logado */}
-            {!usuario && (
-              <div style={{ padding: '0 20px 24px', textAlign: 'center' }}>
-                <a href={stravaAuthUrl} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                  height: 52, background: C.red, borderRadius: 14,
-                  color: '#fff', textDecoration: 'none',
-                  fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700,
-                  fontSize: 17, letterSpacing: 1, textTransform: 'uppercase',
-                  boxShadow: '0 6px 20px rgba(232,53,74,0.35)',
-                }}>
-                  <span style={{ width: 18, height: 18, background: '#fff', flexShrink: 0, clipPath: 'polygon(30% 0%,100% 0%,70% 50%,100% 50%,0% 100%,30% 50%,0% 50%)' }} />
-                  Entrar e aparecer no ranking
-                </a>
-              </div>
-            )}
           </>
         )}
 
@@ -542,7 +531,7 @@ export default function App() {
               <span style={{ fontSize: 22 }}>🏃</span>
             </div>
             <div style={{ padding: '16px 16px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {usuario && corridas.length === 0 && (
+              {corridas.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '40px 0', color: C.muted }}>
                   <div style={{ fontSize: 40, marginBottom: 10 }}>🏃</div>
                   <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 18 }}>
@@ -552,12 +541,13 @@ export default function App() {
                 </div>
               )}
               {corridas.map((corrida) => {
-                const km      = (corrida.distance_meters / 1000).toFixed(2)
-                const minutos = Math.round((corrida.moving_time_sec || 0) / 60)
-                const data    = new Date(corrida.start_date).toLocaleDateString('pt-BR')
-                const pace    = corrida.moving_time_sec && corrida.distance_meters
-                  ? Math.round(corrida.moving_time_sec / (corrida.distance_meters / 1000))
-                  : null
+                const distanceMeters = Number(corrida.distance_meters || 0)
+                const movingTimeSec  = Number(corrida.moving_time_sec || 0)
+                const km      = (distanceMeters / 1000).toFixed(2)
+                const minutos = Math.round(movingTimeSec / 60)
+                const data    = corrida.start_date ? new Date(corrida.start_date).toLocaleDateString('pt-BR') : '-'
+                const pace    = movingTimeSec && distanceMeters
+                  ? Math.round(movingTimeSec / (distanceMeters / 1000)) : null
                 const pill = (cor, txt) => (
                   <span style={{
                     background: `rgba(${cor},0.1)`, border: `1px solid rgba(${cor},0.22)`,
@@ -565,14 +555,10 @@ export default function App() {
                   }}>{txt}</span>
                 )
                 return (
-                  <div key={corrida.id} style={{
-                    background: C.card, border: `1px solid ${C.border}`,
-                    borderRadius: 16, padding: 14,
-                  }}>
-                    <div style={{
-                      fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800,
-                      fontSize: 17, color: C.text, marginBottom: 10,
-                    }}>🏃 {corrida.name || 'Corrida'}</div>
+                  <div key={corrida.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 14 }}>
+                    <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: 17, color: C.text, marginBottom: 10 }}>
+                      🏃 {corrida.name || 'Corrida'}
+                    </div>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       {pill('232,53,74', `📏 ${km} km`)}
                       {pill('255,255,255', `⏱ ${minutos} min`)}
@@ -591,152 +577,144 @@ export default function App() {
         {/* ── ABA PERFIL ── */}
         {usuario && aba === 'perfil' && (
           <div>
-            {/* hero perfil */}
-                <div style={{
-                  padding: '52px 20px 24px', position: 'relative',
-                  background: `linear-gradient(180deg, ${C.navy2} 0%, ${C.navy} 100%)`,
-                  borderBottom: `1px solid ${C.border}`,
-                }}>
-                  <div style={{
-                    position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
-                    width: 200, height: 100, pointerEvents: 'none',
-                    background: 'radial-gradient(ellipse, rgba(232,53,74,0.15) 0%, transparent 70%)',
-                  }} />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20, position: 'relative' }}>
-                    <div style={{ position: 'relative', flexShrink: 0 }}>
-                      <Avatar src={usuario.profile_picture} nome={usuario.name} size={72} index={0} borderColor={C.red} />
-                      {minhaPosicao > 0 && minhaPosicao <= 3 && (
-                        <div style={{
-                          position: 'absolute', bottom: -2, right: -2,
-                          width: 22, height: 22, background: C.gold, borderRadius: '50%',
-                          border: `2px solid ${C.navy}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 11,
-                        }}>🥇</div>
-                      )}
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 26, lineHeight: 1, marginBottom: 4 }}>
-                        {usuario.name}
-                      </div>
-                      <div style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 6,
-                        background: 'rgba(232,53,74,0.12)', border: '1px solid rgba(232,53,74,0.25)',
-                        borderRadius: 100, padding: '4px 10px',
-                        fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 13, color: C.red2,
-                      }}>
-                        🏆 {minhaPosicao > 0 ? `${minhaPosicao}° no ranking` : 'Sem corridas ainda'}
-                      </div>
-                    </div>
-                    <button onClick={logout} style={{
-                      marginLeft: 'auto', background: 'rgba(255,255,255,.06)',
-                      border: `1px solid ${C.border}`, borderRadius: 10,
-                      color: C.muted, fontSize: 11, padding: '6px 10px', cursor: 'pointer',
-                      fontFamily: "'Barlow',sans-serif",
-                    }}>Sair</button>
-                  </div>
-
-                  {/* stats grid 3 colunas */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
-                    {[
-                      { val: Number(meuRanking?.total_km || 0).toFixed(1), lbl: 'km este mês', cor: C.red },
-                      { val: corridas.length,                               lbl: 'corridas',    cor: C.text },
-                      { val: Number(meuRanking?.maior_corrida_km || 0).toFixed(1), lbl: 'maior km', cor: C.gold },
-                    ].map((s, i) => (
-                      <div key={i} style={{
-                        background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}`,
-                        borderRadius: 12, padding: '12px 10px',
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-                      }}>
-                        <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 24, lineHeight: 1, color: s.cor }}>
-                          {s.val}
-                        </div>
-                        <div style={{ fontSize: 10, color: C.muted, letterSpacing: 0.5, textTransform: 'uppercase', textAlign: 'center' }}>
-                          {s.lbl}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+            <div style={{
+              padding: '52px 20px 24px', position: 'relative',
+              background: `linear-gradient(180deg, ${C.navy2} 0%, ${C.navy} 100%)`,
+              borderBottom: `1px solid ${C.border}`,
+            }}>
+              <div style={{
+                position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+                width: 200, height: 100, pointerEvents: 'none',
+                background: 'radial-gradient(ellipse, rgba(232,53,74,0.15) 0%, transparent 70%)',
+              }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20, position: 'relative' }}>
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <Avatar src={usuario.profile_picture} nome={usuario.name} size={72} index={0} borderColor={C.red} />
+                  {minhaPosicao > 0 && minhaPosicao <= 3 && (
+                    <div style={{
+                      position: 'absolute', bottom: -2, right: -2,
+                      width: 22, height: 22, background: C.gold, borderRadius: '50%',
+                      border: `2px solid ${C.navy}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11,
+                    }}>🥇</div>
+                  )}
                 </div>
-
-                {/* gráfico semanal */}
-                <div style={{ padding: '20px 20px 0' }}>
-                  <div style={{
-                    fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700,
-                    fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: C.muted, marginBottom: 14,
-                  }}>Atividade — última semana</div>
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 80 }}>
-                    {kmPorDia.map((d, i) => {
-                      const isHoje  = i === 6
-                      const temKm   = d.km > 0
-                      const altura  = Math.max(8, Math.round((d.km / maxKmDia) * 72))
-                      const corBar  = isHoje ? C.orange : temKm ? C.red : C.navy3
-                      return (
-                        <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, height: '100%', justifyContent: 'flex-end' }}>
-                          <div style={{
-                            width: '100%', borderRadius: '6px 6px 2px 2px',
-                            height: altura, background: corBar,
-                            boxShadow: isHoje ? '0 0 12px rgba(255,122,61,0.4)' : 'none',
-                          }} />
-                          <span style={{
-                            fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5,
-                            color: isHoje ? C.orange : C.muted,
-                          }}>{d.dia}</span>
-                        </div>
-                      )
-                    })}
+                <div>
+                  <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 26, lineHeight: 1, marginBottom: 4 }}>
+                    {usuario.name}
                   </div>
-                </div>
-
-                {/* conquistas */}
-                <div style={{ padding: '20px 20px 0' }}>
                   <div style={{
-                    fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700,
-                    fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: C.muted, marginBottom: 14,
-                  }}>Conquistas</div>
-                  <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
-                    {conquistas.map((c, i) => (
-                      <div key={i} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                        <div style={{
-                          width: 52, height: 52, borderRadius: 16, fontSize: 22,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          background: c.ganhou ? 'rgba(255,184,48,0.1)' : C.card,
-                          border: `1px solid ${c.ganhou ? 'rgba(255,184,48,0.3)' : C.border}`,
-                          opacity: c.ganhou ? 1 : 0.4,
-                          filter: c.ganhou ? 'none' : 'grayscale(1)',
-                        }}>{c.emoji}</div>
-                        <span style={{ fontSize: 10, color: C.muted, textAlign: 'center', maxWidth: 54, lineHeight: 1.3 }}>
-                          {c.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* compartilhar */}
-                <div style={{ padding: '20px 20px 0' }}>
-                  <a href={`https://wa.me/?text=${encodeURIComponent(
-                    `🏃 Estou em ${minhaPosicao}° lugar no RunRank Iguatu com ${Number(meuRanking?.total_km || 0).toFixed(1)} km esse mês! Corre lá: ${window.location.origin}`
-                  )}`} target="_blank" rel="noreferrer" style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                    background: 'rgba(37,211,102,0.08)', border: '1px solid rgba(37,211,102,0.2)',
-                    borderRadius: 14, padding: '14px 20px',
-                    color: '#25D366', fontFamily: "'Barlow Condensed',sans-serif",
-                    fontWeight: 700, fontSize: 17, textDecoration: 'none', letterSpacing: 0.5,
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    background: 'rgba(232,53,74,0.12)', border: '1px solid rgba(232,53,74,0.25)',
+                    borderRadius: 100, padding: '4px 10px',
+                    fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 13, color: C.red2,
                   }}>
-                    <span style={{ fontSize: 20 }}>📲</span>
-                    Compartilhar no WhatsApp
-                  </a>
+                    🏆 {minhaPosicao > 0 ? `${minhaPosicao}° no ranking` : 'Sem corridas ainda'}
+                  </div>
                 </div>
+                <button onClick={logout} style={{
+                  marginLeft: 'auto', background: 'rgba(255,255,255,.06)',
+                  border: `1px solid ${C.border}`, borderRadius: 10,
+                  color: C.muted, fontSize: 11, padding: '6px 10px', cursor: 'pointer',
+                  fontFamily: "'Barlow',sans-serif",
+                }}>Sair</button>
+              </div>
+
+              {/* stats grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
+                {[
+                  { val: Number(meuRanking?.total_km || 0).toFixed(1),         lbl: 'km este mês', cor: C.red  },
+                  { val: corridas.length,                                        lbl: 'corridas',    cor: C.text },
+                  { val: Number(meuRanking?.maior_corrida_km || 0).toFixed(1),  lbl: 'maior km',    cor: C.gold },
+                ].map((s, i) => (
+                  <div key={i} style={{
+                    background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}`,
+                    borderRadius: 12, padding: '12px 10px',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                  }}>
+                    <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 24, lineHeight: 1, color: s.cor }}>
+                      {s.val}
+                    </div>
+                    <div style={{ fontSize: 10, color: C.muted, letterSpacing: 0.5, textTransform: 'uppercase', textAlign: 'center' }}>
+                      {s.lbl}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* gráfico semanal — BUG 1 CORRIGIDO */}
+            <div style={{ padding: '20px 20px 0' }}>
+              <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: C.muted, marginBottom: 14 }}>
+                Atividade — última semana
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 80 }}>
+                {kmPorDia.map((d, i) => {
+                  const altura = Math.max(8, Math.round((d.km / maxKmDia) * 72))
+                  const corBar = d.isHoje ? C.orange : d.km > 0 ? C.red : C.navy3
+                  return (
+                    <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, height: '100%', justifyContent: 'flex-end' }}>
+                      <div style={{
+                        width: '100%', borderRadius: '6px 6px 2px 2px',
+                        height: altura, background: corBar,
+                        boxShadow: d.isHoje ? '0 0 12px rgba(255,122,61,0.4)' : 'none',
+                      }} />
+                      <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5, color: d.isHoje ? C.orange : C.muted }}>
+                        {d.dia}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* conquistas */}
+            <div style={{ padding: '20px 20px 0' }}>
+              <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 12, letterSpacing: 2, textTransform: 'uppercase', color: C.muted, marginBottom: 14 }}>
+                Conquistas
+              </div>
+              <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+                {conquistas.map((c, i) => (
+                  <div key={i} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                    <div style={{
+                      width: 52, height: 52, borderRadius: 16, fontSize: 22,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: c.ganhou ? 'rgba(255,184,48,0.1)' : C.card,
+                      border: `1px solid ${c.ganhou ? 'rgba(255,184,48,0.3)' : C.border}`,
+                      opacity: c.ganhou ? 1 : 0.4, filter: c.ganhou ? 'none' : 'grayscale(1)',
+                    }}>{c.emoji}</div>
+                    <span style={{ fontSize: 10, color: C.muted, textAlign: 'center', maxWidth: 54, lineHeight: 1.3 }}>
+                      {c.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* compartilhar */}
+            <div style={{ padding: '20px 20px 0' }}>
+              <a href={`https://wa.me/?text=${encodeURIComponent(
+                `🏃 Estou em ${minhaPosicao}° lugar no RunRank Iguatu com ${Number(meuRanking?.total_km || 0).toFixed(1)} km esse mês! Corre lá: ${window.location.origin}`
+              )}`} target="_blank" rel="noreferrer" style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                background: 'rgba(37,211,102,0.08)', border: '1px solid rgba(37,211,102,0.2)',
+                borderRadius: 14, padding: '14px 20px',
+                color: '#25D366', fontFamily: "'Barlow Condensed',sans-serif",
+                fontWeight: 700, fontSize: 17, textDecoration: 'none', letterSpacing: 0.5,
+              }}>
+                <span style={{ fontSize: 20 }}>📲</span>
+                Compartilhar no WhatsApp
+              </a>
+            </div>
           </div>
         )}
 
       </div>{/* /inner */}
 
-      {/* ── TAB BAR — só aparece após login ── */}
+      {/* ── TAB BAR ── */}
       {usuario && (
-        <div style={{ ...S.tabBar, maxWidth: 430, left: '50%', transform: 'translateX(-50%)', width: '100%' }}>
+        <div style={S.tabBar}>
           {tabItems.map(t => (
-            <button key={t.id} style={S.tabItem(aba === t.id)} onClick={() => setAba(t.id)}>
+            <button key={t.id} style={S.tabItem()} onClick={() => setAba(t.id)}>
               <span style={{ fontSize: 20 }}>{t.icon}</span>
               <span style={S.tabLbl(aba === t.id)}>{t.label}</span>
             </button>
