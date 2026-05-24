@@ -249,7 +249,7 @@ export default function App() {
     podiumBase: (tipo) => ({
       borderRadius: '10px 10px 0 0', width: 80,
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 0',
-      height: tipo === 'first' ? 56 : tipo === 'second' ? 40 : 28,
+      height: tipo === 'first' ? 68 : tipo === 'second' ? 40 : 28,
       background: tipo === 'first'
         ? 'rgba(255,184,48,0.12)'
         : tipo === 'second'
@@ -346,7 +346,7 @@ export default function App() {
                 src={logoRunRank}
                 alt="RunRank"
                 style={{
-                  width: 86, height: 86, objectFit: 'contain',
+                  width: 150, height: 150, objectFit: 'contain',
                   marginBottom: 10,
                   filter: 'drop-shadow(0 8px 28px rgba(232,53,74,0.40))',
                 }}
@@ -396,12 +396,13 @@ export default function App() {
               )}
 
               <a href={stravaAuthUrl} style={{
-                width: '100%', height: 56, background: C.red, borderRadius: 16,
+                width: '100%', height: 62, background: C.red, borderRadius: 20,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
                 color: '#fff', textDecoration: 'none',
                 fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 18,
                 letterSpacing: 1, textTransform: 'uppercase',
                 boxShadow: '0 8px 24px rgba(232,53,74,0.35)',
+                transition:'all .2s ease',
               }}>
                 <span style={{ width: 22, height: 22, background: '#fff', flexShrink: 0, clipPath: 'polygon(30% 0%,100% 0%,70% 50%,100% 50%,0% 100%,30% 50%,0% 50%)' }} />
                 {loading ? 'Sincronizando...' : 'Entrar com Strava'}
@@ -445,7 +446,7 @@ export default function App() {
                   const idx    = tipo === 'first' ? 0 : tipo === 'second' ? 1 : 2
                   const atleta = top3[idx]
                   if (!atleta) return null
-                  const avSize  = tipo === 'first' ? 64 : 52
+                  const avSize  = tipo === 'first' ? 78 : 54
                   const borderC = tipo === 'first' ? C.gold : tipo === 'second' ? C.silver : C.bronze
                   return (
                     <div key={atleta.id} style={S.podiumCard(tipo)}>
@@ -702,7 +703,7 @@ export default function App() {
                 fontWeight: 700, fontSize: 17, textDecoration: 'none', letterSpacing: 0.5,
               }}>
                 <span style={{ fontSize: 20 }}>📲</span>
-                Compartilhar no WhatsApp
+                Compartilhar minha posição
               </a>
             </div>
           </div>
