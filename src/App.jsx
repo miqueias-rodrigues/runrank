@@ -324,9 +324,9 @@ export default function App() {
         {/* ── TELA LOGIN ── */}
         {!usuario && (
           <div style={{
-            height: '100vh', display: 'flex', flexDirection: 'column',
+            height: '100dvh', display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'flex-end',
-            paddingBottom: 56, position: 'relative', overflow: 'hidden',
+            paddingBottom: 24, position: 'relative', overflow: 'hidden',
           }}>
             {/* fundos decorativos */}
             <div style={{
@@ -346,22 +346,22 @@ export default function App() {
                 src={logoRunRank}
                 alt="RunRank"
                 style={{
-                  width: 110, height: 110, objectFit: 'contain',
-                  marginBottom: 16,
+                  width: 86, height: 86, objectFit: 'contain',
+                  marginBottom: 10,
                   filter: 'drop-shadow(0 8px 28px rgba(232,53,74,0.40))',
                 }}
               />
-              <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 52, letterSpacing: -1, color: '#fff', lineHeight: 1, marginBottom: 6 }}>
+              <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 44, letterSpacing: -1, color: '#fff', lineHeight: 1, marginBottom: 4 }}>
                 Run<span style={{ color: C.red }}>Rank</span>
               </div>
-              <div style={{ fontSize: 14, color: C.muted, marginBottom: 32, textAlign: 'center' }}>
+              <div style={{ fontSize: 13, color: C.muted, marginBottom: 16, textAlign: 'center' }}>
                 Iguatu corre. Quem lidera?
               </div>
 
               {/* ── BUG 2 CORRIGIDO: ranking visível sem login ── */}
               {ranking.length > 0 && (
                 <div style={{
-                  width: '100%', marginBottom: 28,
+                  width: '100%', marginBottom: 16,
                   background: C.card, border: `1px solid ${C.border}`,
                   borderRadius: 16, padding: '12px 14px',
                 }}>
