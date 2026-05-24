@@ -168,54 +168,163 @@ function App() {
     >
       <div style={{ maxWidth: 430, margin: '0 auto' }}>
 
-        {/* ── HEADER ── */}
-        <header style={{ textAlign: 'center', paddingTop: 36, marginBottom: 28 }}>
-          <div
-            style={{
-              width:          76,
-              height:         76,
-              margin:         '0 auto 14px',
-              borderRadius:   22,
-              background:     'linear-gradient(135deg, #E8354A, #FF4D63)',
-              display:        'flex',
-              alignItems:     'center',
-              justifyContent: 'center',
-              fontSize:       34,
-              fontWeight:     900,
-              boxShadow:      '0 14px 40px rgba(232,53,74,.35)',
-              color:          '#FFFFFF'
-            }}
-          >
-            RR
-          </div>
-
-          <h1 style={{ fontSize: 44, margin: 0, letterSpacing: -2, color: '#FFFFFF' }}>
-            Run<span style={{ color: '#E8354A' }}>Rank</span>
-          </h1>
-
-          <p style={{ color: '#8A91A8', marginTop: 4 }}>
-            Iguatu corre. Quem lidera?
-          </p>
-        </header>
-
-        {/* ── BOTÃO STRAVA ── */}
-        <a
-          href={stravaAuthUrl}
+        {/* ── HERO / LOGIN PREMIUM ── */}
+        <header
           style={{
-            display:        'block',
-            background:     'linear-gradient(135deg, #E8354A, #FF4D63)',
-            color:          'white',
-            textAlign:      'center',
-            padding:        '16px 20px',
-            borderRadius:   18,
-            textDecoration: 'none',
-            fontWeight:     'bold',
-            marginBottom:   24,
-            boxShadow:      '0 10px 30px rgba(232,53,74,.28)'
+            position: 'relative',
+            minHeight: usuario ? 250 : 520,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: usuario ? 'flex-start' : 'flex-end',
+            paddingTop: 50,
+            paddingBottom: usuario ? 12 : 18,
+            marginBottom: usuario ? 6 : 4,
+            overflow: 'hidden',
+            borderRadius: 28
           }}
         >
-          {loading ? '⏳ Sincronizando...' : usuario ? '🔄 Atualizar com Strava' : '🏃 Entrar com Strava'}
-        </a>
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background:
+                'radial-gradient(ellipse 220px 320px at 50% 30%, rgba(232,53,74,0.18) 0%, transparent 70%), radial-gradient(ellipse 320px 220px at 80% 10%, rgba(255,122,61,0.10) 0%, transparent 60%)',
+              pointerEvents: 'none'
+            }}
+          />
+
+          <div
+            style={{
+              position: 'absolute',
+              left: -20,
+              right: -20,
+              bottom: 0,
+              height: 230,
+              opacity: 0.06,
+              background:
+                'repeating-linear-gradient(0deg, transparent, transparent 38px, rgba(255,255,255,0.45) 38px, rgba(255,255,255,0.45) 40px)'
+            }}
+          />
+
+          {!usuario && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 105,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 92,
+                height: 92,
+                opacity: 0.95
+              }}
+            >
+              <svg viewBox="0 0 90 90" width="92" height="92">
+                <circle cx="52" cy="18" r="10" fill="#E8354A" />
+                <line x1="52" y1="28" x2="46" y2="52" stroke="#E8354A" strokeWidth="6" strokeLinecap="round" />
+                <line x1="50" y1="36" x2="30" y2="28" stroke="#E8354A" strokeWidth="5" strokeLinecap="round" />
+                <line x1="50" y1="36" x2="66" y2="46" stroke="#E8354A" strokeWidth="5" strokeLinecap="round" />
+                <line x1="46" y1="52" x2="26" y2="66" stroke="#E8354A" strokeWidth="6" strokeLinecap="round" />
+                <line x1="26" y1="66" x2="18" y2="82" stroke="#E8354A" strokeWidth="5" strokeLinecap="round" />
+                <line x1="46" y1="52" x2="58" y2="68" stroke="#E8354A" strokeWidth="6" strokeLinecap="round" />
+                <line x1="58" y1="68" x2="74" y2="72" stroke="#E8354A" strokeWidth="5" strokeLinecap="round" />
+                <line x1="14" y1="82" x2="2" y2="82" stroke="#E8354A" strokeWidth="3" strokeLinecap="round" opacity="0.4" />
+                <line x1="10" y1="78" x2="2" y2="78" stroke="#E8354A" strokeWidth="2" strokeLinecap="round" opacity="0.22" />
+              </svg>
+            </div>
+          )}
+
+          <div style={{ position: 'relative', zIndex: 2, width: '100%', textAlign: 'center' }}>
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                background: '#E8354A',
+                borderRadius: 18,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 20px',
+                boxShadow: '0 8px 32px rgba(232,53,74,0.40)',
+                fontWeight: 900,
+                fontSize: 32,
+                color: '#FFFFFF',
+                letterSpacing: -1
+              }}
+            >
+              RR
+            </div>
+
+            <div
+              style={{
+                fontSize: 52,
+                fontWeight: 900,
+                letterSpacing: -1.5,
+                color: '#FFFFFF',
+                lineHeight: 1
+              }}
+            >
+              Run<span style={{ color: '#E8354A' }}>Rank</span>
+            </div>
+
+            <div
+              style={{
+                fontSize: 14,
+                color: '#6B7499',
+                marginTop: 8,
+                marginBottom: usuario ? 26 : 46,
+                letterSpacing: 0.4
+              }}
+            >
+              Iguatu corre. Quem lidera?
+            </div>
+
+            <a
+              href={stravaAuthUrl}
+              style={{
+                width: '100%',
+                height: 56,
+                background: '#E8354A',
+                borderRadius: 16,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 12,
+                color: '#FFFFFF',
+                textDecoration: 'none',
+                fontWeight: 900,
+                fontSize: 16,
+                textTransform: 'uppercase',
+                boxShadow: '0 8px 24px rgba(232,53,74,0.35)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              <span
+                style={{
+                  width: 20,
+                  height: 20,
+                  background: '#FFFFFF',
+                  clipPath: 'polygon(30% 0%, 100% 0%, 70% 50%, 100% 50%, 0% 100%, 30% 50%, 0% 50%)',
+                  flexShrink: 0
+                }}
+              />
+              {loading ? 'Sincronizando...' : usuario ? 'Atualizar com Strava' : 'Entrar com Strava'}
+            </a>
+
+            <p
+              style={{
+                marginTop: 16,
+                fontSize: 11,
+                color: '#6B7499',
+                lineHeight: 1.6
+              }}
+            >
+              Seus dados de corrida são importados<br />
+              diretamente do Strava. Nenhum GPS é ativado.
+            </p>
+          </div>
+        </header>
 
         {/* ── CARD DO USUÁRIO LOGADO ── */}
         {usuario && (
@@ -315,15 +424,47 @@ function App() {
               border:       '1px solid rgba(255,255,255,.08)',
               borderRadius: 24,
               padding:      18,
+              marginTop:    usuario ? 0 : -8,
               marginBottom: 18
-            }}
+           }}
           >
+
+          {!usuario && (
+            <div
+              style={{
+                marginBottom: 34,
+                textAlign: 'center',
+                opacity: .92
+              }}
+            >
+              <div
+                style={{
+                  color:'#FFFFFF',
+                  fontWeight:700,
+                  fontSize:14,
+                  marginBottom:8
+                }}
+              >
+                🏆 Veja quem está liderando na cidade
+              </div>
+
+              <div
+                style={{
+                  color:'#8A91A8',
+                  fontSize:13,
+                  lineHeight:1.6
+                }}
+              >
+                Entre com Strava para participar do ranking.
+              </div>
+            </div>
+          )}   
             <div
               style={{
                 display:        'flex',
                 justifyContent: 'space-between',
                 alignItems:     'end',
-                marginBottom:   16
+                marginBottom:   22
               }}
             >
               <div>
@@ -597,24 +738,25 @@ function App() {
       </div>
 
       {/* ── NAV BAR FIXA ── */}
-      <nav
-        style={{
-          position:        'fixed',
-          bottom:          18,
-          left:            '50%',
-          transform:       'translateX(-50%)',
-          width:           '90%',
-          maxWidth:        430,
-          background:      'rgba(18,21,34,.96)',
-          border:          '1px solid rgba(255,255,255,.08)',
-          borderRadius:    24,
-          padding:         10,
-          display:         'flex',
-          gap:             8,
-          backdropFilter:  'blur(16px)',
-          zIndex:          20
-        }}
-      >
+      {usuario && (
+        <nav
+          style={{
+            position:        'fixed',
+            bottom:          18,
+            left:            '50%',
+            transform:       'translateX(-50%)',
+            width:           '90%',
+            maxWidth:        430,
+            background:      'rgba(18,21,34,.96)',
+            border:          '1px solid rgba(255,255,255,.08)',
+            borderRadius:    24,
+            padding:         10,
+            display:         'flex',
+            gap:             8,
+            backdropFilter:  'blur(16px)',
+            zIndex:          20
+          }}
+       >
         <button
           onClick={() => setAba('ranking')}
           style={{
@@ -651,6 +793,7 @@ function App() {
           👤 Perfil
         </button>
       </nav>
+    )}
     </div>
   )
 }
