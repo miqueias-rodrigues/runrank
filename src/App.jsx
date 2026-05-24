@@ -346,7 +346,7 @@ export default function App() {
                 src={logoRunRank}
                 alt="RunRank"
                 style={{
-                  width: 150, height: 150, objectFit: 'contain',
+                  width: 125, height: 125, objectFit: 'contain',
                   marginBottom: 10,
                   filter: 'drop-shadow(0 8px 28px rgba(232,53,74,0.40))',
                 }}
