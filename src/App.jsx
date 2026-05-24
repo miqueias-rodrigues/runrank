@@ -328,11 +328,11 @@ export default function App() {
       <div style={S.inner}>
 
         {/* ── TELA LOGIN ── */}
-        {!usuario && aba === 'ranking' && (
+        {!usuario && (
           <div style={{
-            minHeight: '100vh', display: 'flex', flexDirection: 'column',
+            height: '100vh', display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'flex-end',
-            paddingBottom: 60, position: 'relative', overflow: 'hidden',
+            paddingBottom: 56, position: 'relative', overflow: 'hidden',
           }}>
             {/* fundos decorativos */}
             <div style={{
@@ -346,7 +346,7 @@ export default function App() {
               background: 'repeating-linear-gradient(0deg,transparent,transparent 38px,rgba(255,255,255,0.4) 38px,rgba(255,255,255,0.4) 40px)',
             }} />
             {/* runner */}
-            <div style={{ position: 'absolute', top: 120, left: '50%', transform: 'translateX(-50%)', opacity: 0.9 }}>
+            <div style={{ position: 'absolute', top: '18%', left: '50%', transform: 'translateX(-50%)', opacity: 0.9 }}>
               <svg viewBox="0 0 90 90" width="90" height="90">
                 <circle cx="52" cy="18" r="10" fill={C.red} />
                 <line x1="52" y1="28" x2="46" y2="52" stroke={C.red} strokeWidth="6" strokeLinecap="round" />
@@ -365,14 +365,14 @@ export default function App() {
               <div style={{
                 width: 64, height: 64, background: C.red, borderRadius: 18,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                marginBottom: 20, boxShadow: '0 8px 32px rgba(232,53,74,0.4)',
+                marginBottom: 14, boxShadow: '0 8px 32px rgba(232,53,74,0.4)',
               }}>
                 <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 32, color: '#fff', letterSpacing: -1 }}>RR</span>
               </div>
               <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 52, letterSpacing: -1, color: '#fff', lineHeight: 1, marginBottom: 6 }}>
                 Run<span style={{ color: C.red }}>Rank</span>
               </div>
-              <div style={{ fontSize: 14, color: C.muted, marginBottom: 48, textAlign: 'center' }}>
+              <div style={{ fontSize: 14, color: C.muted, marginBottom: 32, textAlign: 'center' }}>
                 Iguatu corre. Quem lidera?
               </div>
               <a href={stravaAuthUrl} style={{
@@ -393,8 +393,8 @@ export default function App() {
           </div>
         )}
 
-        {/* ── ABA RANKING (logado) ── */}
-        {(usuario || ranking.length > 0) && aba === 'ranking' && (
+        {/* ── ABA RANKING (só logado) ── */}
+        {usuario && aba === 'ranking' && (
           <>
             {/* header */}
             <div style={S.rankHeader}>
@@ -528,7 +528,7 @@ export default function App() {
         )}
 
         {/* ── ABA CORRIDAS ── */}
-        {aba === 'corridas' && (
+        {usuario && aba === 'corridas' && (
           <div>
             <div style={{ ...S.rankHeader, marginBottom: 0 }}>
               <div>
@@ -538,11 +538,6 @@ export default function App() {
               <span style={{ fontSize: 22 }}>🏃</span>
             </div>
             <div style={{ padding: '16px 16px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {!usuario && (
-                <p style={{ color: C.muted, textAlign: 'center', padding: '32px 0' }}>
-                  Entre com o Strava para ver suas corridas.
-                </p>
-              )}
               {usuario && corridas.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '40px 0', color: C.muted }}>
                   <div style={{ fontSize: 40, marginBottom: 10 }}>🏃</div>
@@ -590,25 +585,9 @@ export default function App() {
         )}
 
         {/* ── ABA PERFIL ── */}
-        {aba === 'perfil' && (
+        {usuario && aba === 'perfil' && (
           <div>
-            {!usuario ? (
-              <div style={{ textAlign: 'center', padding: '80px 32px' }}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>👤</div>
-                <a href={stravaAuthUrl} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                  height: 52, background: C.red, borderRadius: 14,
-                  color: '#fff', textDecoration: 'none',
-                  fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700,
-                  fontSize: 17, letterSpacing: 1, textTransform: 'uppercase',
-                }}>
-                  <span style={{ width: 18, height: 18, background: '#fff', flexShrink: 0, clipPath: 'polygon(30% 0%,100% 0%,70% 50%,100% 50%,0% 100%,30% 50%,0% 50%)' }} />
-                  Entrar com Strava
-                </a>
-              </div>
-            ) : (
-              <>
-                {/* hero perfil */}
+            {/* hero perfil */}
                 <div style={{
                   padding: '52px 20px 24px', position: 'relative',
                   background: `linear-gradient(180deg, ${C.navy2} 0%, ${C.navy} 100%)`,
@@ -744,22 +723,22 @@ export default function App() {
                     Compartilhar no WhatsApp
                   </a>
                 </div>
-              </>
-            )}
           </div>
         )}
 
       </div>{/* /inner */}
 
-      {/* ── TAB BAR ── */}
-      <div style={{ ...S.tabBar, maxWidth: 430, left: '50%', transform: 'translateX(-50%)', width: '100%' }}>
-        {tabItems.map(t => (
-          <button key={t.id} style={S.tabItem(aba === t.id)} onClick={() => setAba(t.id)}>
-            <span style={{ fontSize: 20 }}>{t.icon}</span>
-            <span style={S.tabLbl(aba === t.id)}>{t.label}</span>
-          </button>
-        ))}
-      </div>
+      {/* ── TAB BAR — só aparece após login ── */}
+      {usuario && (
+        <div style={{ ...S.tabBar, maxWidth: 430, left: '50%', transform: 'translateX(-50%)', width: '100%' }}>
+          {tabItems.map(t => (
+            <button key={t.id} style={S.tabItem(aba === t.id)} onClick={() => setAba(t.id)}>
+              <span style={{ fontSize: 20 }}>{t.icon}</span>
+              <span style={S.tabLbl(aba === t.id)}>{t.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
