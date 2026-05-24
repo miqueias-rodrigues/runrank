@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
+import logoRunRank from './assets/logo-runrank.png'
 
 /* ─── Fonte Barlow Condensed ─── */
 const fontLink = document.createElement('link')
@@ -361,14 +362,17 @@ export default function App() {
             </div>
 
             <div style={{ position: 'relative', zIndex: 2, width: '100%', padding: '0 32px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              {/* logo */}
-              <div style={{
-                width: 64, height: 64, background: C.red, borderRadius: 18,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                marginBottom: 14, boxShadow: '0 8px 32px rgba(232,53,74,0.4)',
-              }}>
-                <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 32, color: '#fff', letterSpacing: -1 }}>RR</span>
-              </div>
+             <img
+                src={logoRunRank}
+                alt="RunRank"
+                style={{
+                  width: 92,
+                  height: 92,
+                  objectFit: 'contain',
+                  marginBottom: 14,
+                  filter: 'drop-shadow(0 8px 28px rgba(232,53,74,0.35))'
+                }}
+              />
               <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 900, fontSize: 52, letterSpacing: -1, color: '#fff', lineHeight: 1, marginBottom: 6 }}>
                 Run<span style={{ color: C.red }}>Rank</span>
               </div>
