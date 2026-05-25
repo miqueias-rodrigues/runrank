@@ -84,6 +84,8 @@ export default function App() {
 
   const STRAVA_CLIENT_ID = import.meta.env.VITE_STRAVA_CLIENT_ID
   const FUNCTION_URL     = 'https://vgathsrrzurpzmiapdte.supabase.co/functions/v1/hyper-service'
+  const SYNC_URL    = 'https://vgathsrrzurpzmiapdte.supabase.co/functions/v1/sync-strava'
+  
   const redirectUri      = new URL(`${BASE_URL}callback`, window.location.origin).toString()
 
   const stravaAuthUrl =
@@ -118,6 +120,38 @@ export default function App() {
     setCorridas(data || [])
   }
 
+  async function sincronizarStrava(stravaId) {
+    if (!stravaId) return
+
+    try {
+      setLoading(true)
+
+      const res = await fetch(SYNC_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ strava_id: stravaId }),
+      })
+
+      const result = await res.json()
+      console.log('SYNC STRAVA:', result)
+
+      const user = await buscarUsuario(stravaId)
+
+      if (user) {
+        await carregarCorridasDoMes(user.id)
+        await carregarRanking()
+      }
+    } catch (err) {
+      console.error('Erro ao sincronizar Strava:', err)
+    } finally {
+      setLoading(false)
+    }
+}
+
   async function processarCallback(code) {
     setLoading(true)
     try {
@@ -148,10 +182,14 @@ export default function App() {
       const code   = params.get('code')
       if (code) { await processarCallback(code); return }
       const salvo = localStorage.getItem(STORAGE_KEY)
-      if (salvo) {
-        const user = await buscarUsuario(salvo)
-        if (user) await carregarCorridasDoMes(user.id)
-      }
+        if (salvo) {
+          const user = await buscarUsuario(salvo)
+
+          if (user) {
+            await carregarCorridasDoMes(user.id)
+            await sincronizarStrava(salvo)
+          }
+}
     }
     init()
   }, [])
