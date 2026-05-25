@@ -81,6 +81,7 @@ export default function App() {
   const [aba,      setAba]      = useState('ranking')
   const [tabKm,    setTabKm]    = useState('total_km')
   const [corridas, setCorridas] = useState([])
+  const [syncStatus, setSyncStatus] = useState('')
 
   const STRAVA_CLIENT_ID = import.meta.env.VITE_STRAVA_CLIENT_ID
   const FUNCTION_URL     = 'https://vgathsrrzurpzmiapdte.supabase.co/functions/v1/hyper-service'
@@ -125,6 +126,7 @@ export default function App() {
 
     try {
       setLoading(true)
+      setSyncStatus('Sincronizando com Strava...')
 
       const res = await fetch(SYNC_URL, {
         method: 'POST',
@@ -139,6 +141,12 @@ export default function App() {
       const result = await res.json()
       console.log('SYNC STRAVA:', result)
 
+      if (result?.success) {
+        setSyncStatus('Dados atualizados ✅')
+      } else {
+        setSyncStatus('Erro ao atualizar ⚠️')
+      }
+
       const user = await buscarUsuario(stravaId)
 
       if (user) {
@@ -147,8 +155,13 @@ export default function App() {
       }
     } catch (err) {
       console.error('Erro ao sincronizar Strava:', err)
+      setSyncStatus('Erro de sincronização ⚠️')
     } finally {
       setLoading(false)
+
+      setTimeout(() => {
+        setSyncStatus('')
+      }, 2500)
     }
 }
 
@@ -358,6 +371,28 @@ export default function App() {
   return (
     <div style={S.app}>
       <div style={S.inner}>
+
+        {usuario && syncStatus && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 14,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 999,
+              background: 'rgba(13,15,26,.95)',
+              border: `1px solid ${C.border}`,
+              borderRadius: 999,
+              padding: '8px 14px',
+              color: C.text,
+              fontSize: 12,
+              fontWeight: 700,
+              boxShadow: '0 8px 24px rgba(0,0,0,.35)',
+            }}
+          >
+            {syncStatus}
+          </div>
+        )}
 
         {/* ── TELA LOGIN ── */}
         {!usuario && (
