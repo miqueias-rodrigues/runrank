@@ -82,6 +82,7 @@ export default function App() {
   const [tabKm,    setTabKm]    = useState('total_km')
   const [corridas, setCorridas] = useState([])
   const [syncStatus, setSyncStatus] = useState('')
+  const page = new URLSearchParams(window.location.search).get('page')
 
   const STRAVA_CLIENT_ID = import.meta.env.VITE_STRAVA_CLIENT_ID
   const FUNCTION_URL     = 'https://vgathsrrzurpzmiapdte.supabase.co/functions/v1/hyper-service'
@@ -370,7 +371,43 @@ export default function App() {
   ════════════════════════════════════════ */
   return (
     <div style={S.app}>
-      <div style={S.inner}>
+
+      {page === 'privacy' && (
+        <div style={{ maxWidth: 700, margin: '0 auto', padding: '40px 24px', color: C.text, lineHeight: 1.8 }}>
+          <h1 style={{ color: C.red }}>Privacy Policy</h1>
+
+          <p>RunRank Iguatu uses Strava OAuth authentication to access only authorized athlete profile and activity data.</p>
+
+          <p>We collect profile information and activity data strictly to generate rankings, statistics and athlete progress tracking inside the application.</p>
+
+          <p>We use the scopes <strong>activity:read</strong> and <strong>profile:read_all</strong>.</p>
+
+          <p>No user data is sold, transferred or shared with third parties.</p>
+
+          <p>Users may request account or data removal at any time.</p>
+
+          <a href="/" style={{ color: C.red2, textDecoration: 'none', fontWeight: 700 }}>← Back to RunRank</a>
+        </div>
+      )}
+
+      {page === 'terms' && (
+        <div style={{ maxWidth: 700, margin: '0 auto', padding: '40px 24px', color: C.text, lineHeight: 1.8 }}>
+          <h1 style={{ color: C.red }}>Terms of Service</h1>
+
+          <p>By using RunRank Iguatu, you authorize access to your Strava account information according to the permissions granted during login.</p>
+
+          <p>RunRank is intended for leaderboard generation, activity tracking and community motivation.</p>
+
+          <p>Users remain responsible for their Strava account and activity data.</p>
+
+          <p>RunRank may update rankings and statistics based on authorized Strava activities.</p>
+
+          <a href="/" style={{ color: C.red2, textDecoration: 'none', fontWeight: 700 }}>← Back to RunRank</a>
+        </div>
+      )}
+
+      {!page && (
+        <div style={S.inner}>
 
         {usuario && syncStatus && (
           <div
@@ -483,6 +520,28 @@ export default function App() {
               <p style={{ marginTop: 16, fontSize: 11, color: C.muted, textAlign: 'center', lineHeight: 1.6 }}>
                 Seus dados são importados do Strava. Nenhum GPS é ativado.
               </p>
+              <div
+                style={{
+                  marginTop: 14,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: 10,
+                  fontSize: 12
+                }}
+              >
+                <a href="/?page=privacy"
+                  style={{ color: '#a8b1d1', textDecoration: 'none' }}>
+                  Privacy Policy
+                </a>
+
+                <span style={{ color: '#a8b1d1' }}>•</span>
+
+                <a href="/?page=terms"
+                  style={{ color: '#a8b1d1', textDecoration: 'none' }}>
+                  Terms
+                </a>
+              </div>
             </div>
           </div>
         )}
@@ -782,10 +841,11 @@ export default function App() {
           </div>
         )}
 
-      </div>{/* /inner */}
+      </div>
+      )}
 
       {/* ── TAB BAR ── */}
-      {usuario && (
+      {!page && usuario && (
         <div style={S.tabBar}>
           {tabItems.map(t => (
             <button key={t.id} style={S.tabItem()} onClick={() => setAba(t.id)}>
